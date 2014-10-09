@@ -60,7 +60,6 @@ public:
 
 	~Mpi()
 	{
-		std::cerr<<"Calling finalize\n";
 		MPI_Finalize();
 	}
 
@@ -81,7 +80,6 @@ public:
 	void sync(double& v) const
 	{
 		double w = v;
-		std::cerr<<"Calling sync with v = "<<v<<"\n";
 		MPI_Reduce(&v,&w,1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD);
 		v = w;
 	}
@@ -91,7 +89,8 @@ private:
 	static bool init_;
 }; // class Mpi
 
-bool Mpi::init_ = false;
+bool Mpi::init_ = false; // <--- FIXME: linkage in a header file
+
 #endif
 
 } // namespace ConcurrencyPsi

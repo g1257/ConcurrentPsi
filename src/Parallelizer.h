@@ -67,6 +67,8 @@ public:
 		noPthreads();
 	}
 
+	static bool canPrint() { return true; }
+
 private:
 
 	void noPthreads()
@@ -131,6 +133,8 @@ public:
 	{
 		cs.syncPthreads();
 	}
+
+	static bool canPrint() { return true; }
 
 private:
 
@@ -197,7 +201,6 @@ public:
 		if (total % procs !=0) block++;
 		SizeType mpiRank = mpi_->rank();
 
-		std::cerr<<"block = "<<block<<" mpiRank = "<<mpiRank<<" total = "<<total<<"\n";
 		for (SizeType i = 0; i < block; ++i) {
 			SizeType index = i + block*mpiRank;
 			if (index >= total) continue;

@@ -12,7 +12,7 @@ public:
 	typedef double ValueType;
 
 	CriticalStorage()
-	    : value_(1,0.0),currentThread_(0)
+	    : value_(1,0.0)
 	{}
 
 	void prepareForPthreads(SizeType nthreads)
@@ -45,16 +45,9 @@ public:
 		mpi.sync(value_[0]);
 	}
 
-	void clear()
-	{
-		for (SizeType i = 0; i < value_.size(); ++i)
-			value_[i] = 0.0;
-	}
-
 private:
 
 	PsimagLite::Vector<ValueType>::Type value_;
-	SizeType currentThread_;
 
 }; // class CriticalStorage
 

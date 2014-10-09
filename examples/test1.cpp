@@ -59,10 +59,10 @@ public:
 	void operator()(SizeType index, ValueType& v, CriticalStorageType& cs)
 	{
 		kernelInner_.setOuter(index);
-		storageInner_.clear();
-		pInner_.launch(storageInner_);
-		pInner_.sync(storageInner_);
-		v += storageInner_.value();
+		InnerStorageType storageInner;
+		pInner_.launch(storageInner);
+		pInner_.sync(storageInner);
+		v += storageInner.value();
 	}
 
 	SizeType size() const { return totalOuter_; }
@@ -71,7 +71,6 @@ private:
 
 	SizeType totalOuter_;
 	KernelInner kernelInner_;
-	InnerStorageType storageInner_;
 	ParallelizerInnerType pInner_;
 };
 
