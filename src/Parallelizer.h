@@ -1,6 +1,8 @@
 #ifndef PARALLELIZER_H
 #define PARALLELIZER_H
 #include "Vector.h"
+#include "Mpi.h"
+#include <cassert>
 
 namespace ConcurrencyPsi {
 
@@ -13,7 +15,10 @@ class Parallelizer {
 
 public:
 
-	Parallelizer(KernelType& kernel,int nPthreads = 0)
+	Parallelizer(KernelType& kernel,
+	             int nPthreads = 1,
+	             int* argcPtr = 0,
+	             char*** argvPtr = 0)
 	    : kernel_(kernel)
 	{}
 
@@ -29,6 +34,8 @@ public:
 	{
 	}
 
+	static bool canPrint() { return true; }
+
 private:
 
 	KernelType& kernel_;
@@ -42,7 +49,10 @@ class Parallelizer<TYPE_PTHREADS,KernelType> {
 
 public:
 
-	Parallelizer(KernelType& kernel, int nPthreads)
+	Parallelizer(KernelType& kernel,
+	             int nPthreads = 1,
+	             int* argcPtr = 0,
+	             char*** argvPtr = 0)
 	{
 		noPthreads();
 	}
@@ -83,7 +93,10 @@ class Parallelizer<TYPE_PTHREADS,KernelType> {
 
 public:
 
-	Parallelizer(KernelType& kernel, SizeType nPthreads)
+	Parallelizer(KernelType& kernel,
+	             SizeType nPthreads,
+	             int* argcPtr = 0,
+	             char*** argvPtr = 0)
 	    : kernel_(kernel),nthreads_(nPthreads)
 	{}
 
@@ -116,7 +129,7 @@ public:
 
 	void sync(CriticalStorageType& cs)
 	{
-		cs.sync();
+		cs.syncPthreads();
 	}
 
 private:
@@ -144,6 +157,76 @@ private:
 	SizeType nthreads_;
 }; // class Parallelizer
 #endif
+
+template<typename KernelType>
+class Parallelizer<TYPE_MPI,KernelType> {
+
+	typedef Mpi MpiType;
+	typedef typename KernelType::CriticalStorageType CriticalStorageType;
+
+public:
+
+	Parallelizer(KernelType& kernel,
+	             int nPthreads = 1,
+	             int* argcPtr = 0,
+	             char*** argvPtr = 0)
+	    : kernel_(kernel)
+	{
+		if (!mpi_) mpi_ = new MpiType(argcPtr,argvPtr);
+		refCounter_++;
+	}
+
+	~Parallelizer()
+	{
+		if (refCounter_ <= 1) {
+			delete mpi_;
+			mpi_ = 0;
+			return;
+		}
+
+		refCounter_--;
+	}
+
+	void launch(CriticalStorageType& cs)
+	{
+		SizeType total = kernel_.size();
+
+		assert(mpi_);
+		SizeType procs = mpi_->size();
+		SizeType block = static_cast<SizeType>(total/procs);
+		if (total % procs !=0) block++;
+		SizeType mpiRank = mpi_->rank();
+
+		std::cerr<<"block = "<<block<<" mpiRank = "<<mpiRank<<" total = "<<total<<"\n";
+		for (SizeType i = 0; i < block; ++i) {
+			SizeType index = i + block*mpiRank;
+			if (index >= total) continue;
+			kernel_(index,cs.value(),cs);
+		}
+	}
+
+	void sync(CriticalStorageType& cs)
+	{
+		cs.syncMpi(*mpi_);
+	}
+
+	static bool canPrint()
+	{
+		return (mpi_->rank() == 0);
+	}
+
+private:
+
+	static MpiType* mpi_;
+	static SizeType refCounter_;
+	KernelType& kernel_;
+}; // class Parallelizer
+
+template<typename KernelType>
+Mpi* Parallelizer<TYPE_MPI,KernelType>::mpi_ = 0;
+
+template<typename KernelType>
+SizeType Parallelizer<TYPE_MPI,KernelType>::refCounter_ = 0;
 
 } // namespace ConcurrencyPsi
 

@@ -77,6 +77,8 @@ private:
 
 int main(int argc, char* argv[])
 {
+	typedef ConcurrencyPsi::Parallelizer<ConcurrencyPsi::TYPE_MPI,
+	                                     KernelOuter> ParallelizerOuterType;
 	if (argc < 4) {
 		std::cerr<<"USAGE "<<argv[0]<<" totalOuter totalInner nthreads\n";
 		return 1;
@@ -87,13 +89,13 @@ int main(int argc, char* argv[])
 	SizeType nthreads = atoi(argv[3]);
 	std::cout<<"nested loop example \n";
 	KernelOuter kernelOuter(totalOuter, totalInner, nthreads);
-	ConcurrencyPsi::Parallelizer<ConcurrencyPsi::TYPE_MPI,
-	                             KernelOuter> pOuter(kernelOuter);
+	ParallelizerOuterType pOuter(kernelOuter,0,&argc,&argv);
 	KernelOuter::CriticalStorageType cs;
 	pOuter.launch(cs);
 
 	pOuter.sync(cs);
 
-	std::cout<<argv[0]<<" Final Result is "<<cs.value()<<"\n";
+	if (ParallelizerOuterType::canPrint())
+		std::cout<<argv[0]<<" Final Result is "<<cs.value()<<"\n";
 }
 

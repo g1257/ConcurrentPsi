@@ -32,16 +32,23 @@ public:
 		return value_[thread];
 	}
 
-	void sync()
+	void syncPthreads()
 	{
 		for (SizeType i = 1; i < value_.size(); ++i) {
 			value_[0] += value_[i];
 		}
 	}
 
+	template<typename MpiType>
+	void syncMpi(MpiType& mpi)
+	{
+		mpi.sync(value_[0]);
+	}
+
 	void clear()
 	{
-		value_.resize(1,0.0);
+		for (SizeType i = 0; i < value_.size(); ++i)
+			value_[i] = 0.0;
 	}
 
 private:
