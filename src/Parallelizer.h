@@ -2,6 +2,7 @@
 #define PARALLELIZER_H
 #include "Vector.h"
 #include "Mpi.h"
+#include "Pthreads.h"
 #include <cassert>
 
 namespace ConcurrencyPsi {
@@ -41,45 +42,6 @@ private:
 	KernelType& kernel_;
 }; // class Parallelizer
 
-#ifndef USE_PTHREADS
-template<typename KernelType>
-class Parallelizer<TYPE_PTHREADS,KernelType> {
-
-	typedef typename KernelType::CriticalStorageType CriticalStorageType;
-
-public:
-
-	Parallelizer(KernelType& kernel,
-	             int nPthreads = 1,
-	             int* argcPtr = 0,
-	             char*** argvPtr = 0)
-	{
-		noPthreads();
-	}
-
-	void launch(CriticalStorageType& cs)
-	{
-		noPthreads();
-	}
-
-	void sync(CriticalStorageType& cs)
-	{
-		noPthreads();
-	}
-
-	static bool canPrint() { return true; }
-
-private:
-
-	void noPthreads()
-	{
-		throw PsimagLite::RuntimeError("Please add -DUSE_PTHREADS to the Makefile\n");
-	}
-};
-
-#else
-
-#include <pthread.h>
 template<typename KernelType>
 class Parallelizer<TYPE_PTHREADS,KernelType> {
 
@@ -105,7 +67,7 @@ public:
 	void launch(CriticalStorageType& cs)
 	{
 		PthreadFunctionStruct pfs[nthreads_];
-		pthread_t threadId[nthreads_];
+		Pthreads::PthreadType threadId[nthreads_];
 
 		SizeType total = kernel_.size();
 
@@ -119,14 +81,11 @@ public:
 			pfs[j].blockSize = total/nthreads_;
 			if (total%nthreads_!=0) pfs[j].blockSize++;
 			pfs[j].criticalStorage = &cs;
-			if ((ret=pthread_create(&threadId[j],
-			                        0,
-			                        threadFunctionWrapper,
-			                        &pfs[j])))
-			std::cerr<<"Thread creation failed: "<<ret<<"\n";
+			if ((ret=Pthreads::create(&threadId[j],0,threadFunctionWrapper,&pfs[j])))
+				std::cerr<<"Thread creation failed: "<<ret<<"\n";
 		}
 
-		for (SizeType j=0; j < nthreads_; j++) pthread_join(threadId[j], NULL);
+		for (SizeType j=0; j < nthreads_; j++) Pthreads::join(threadId[j], 0);
 	}
 
 	void sync(CriticalStorageType& cs)
@@ -160,7 +119,6 @@ private:
 	KernelType& kernel_;
 	SizeType nthreads_;
 }; // class Parallelizer
-#endif
 
 template<typename KernelType>
 class Parallelizer<TYPE_MPI,KernelType> {
