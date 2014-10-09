@@ -46,7 +46,7 @@ public:
 
 private:
 
-	typename PsimagLite::Vector<ValueType>::Type value_;
+	PsimagLite::Vector<ValueType>::Type value_;
 	SizeType currentThread_;
 
 }; // class CriticalStorage

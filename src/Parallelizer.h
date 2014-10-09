@@ -83,7 +83,7 @@ class Parallelizer<TYPE_PTHREADS,KernelType> {
 
 public:
 
-	Parallelizer(KernelType& kernel, int nPthreads)
+	Parallelizer(KernelType& kernel, SizeType nPthreads)
 	    : kernel_(kernel),nthreads_(nPthreads)
 	{}
 
@@ -141,7 +141,7 @@ private:
 	}
 
 	KernelType& kernel_;
-	int nthreads_;
+	SizeType nthreads_;
 }; // class Parallelizer
 #endif
 
