@@ -1,5 +1,8 @@
 #ifndef MPI_H
 #define MPI_H
+#ifdef USE_MPI
+#include <mpi.h>
+#endif
 
 namespace ConcurrencyPsi {
 
@@ -40,7 +43,6 @@ private:
 	static bool init_;
 }; // class Mpi
 #else
-#include <mpi.h>
 class Mpi {
 
 public:
