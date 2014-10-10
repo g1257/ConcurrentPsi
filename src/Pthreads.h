@@ -12,6 +12,7 @@ class Pthreads {
 public:
 
 #ifndef USE_PTHREADS
+	typedef int DummyType;
 	typedef DummyType PthreadType;
 	typedef DummyType PthreadAttrType;
 #else
