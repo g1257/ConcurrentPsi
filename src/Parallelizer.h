@@ -27,12 +27,13 @@ public:
 	{
 		SizeType total = kernel_.size();
 		for (SizeType i = 0; i < total; ++i) {
-			kernel_(i,cs.value(),cs);
+			kernel_(i,0,cs);
 		}
 	}
 
 	void sync(CriticalStorageType& cs)
 	{
+		cs.syncSerial();
 	}
 
 	static bool canPrint() { return true; }
@@ -48,6 +49,10 @@ class Parallelizer<TYPE_PTHREADS,KernelType> {
 	typedef typename KernelType::CriticalStorageType CriticalStorageType;
 
 	struct PthreadFunctionStruct {
+		PthreadFunctionStruct()
+	      :  kernel(0), blockSize(0), total(0), threadNum(0), criticalStorage(0)
+		{}
+
 		KernelType* kernel;
 		SizeType blockSize;
 		SizeType total;
@@ -109,7 +114,7 @@ private:
 			SizeType index = i + pfs->threadNum*blockSize;
 			if (index >= pfs->total) continue;
 			kernel->operator()(index,
-			                   pfs->criticalStorage->valueAtPthread(pfs->threadNum),
+			                   pfs->threadNum,
 			                   *pfs->criticalStorage);
 		}
 
@@ -162,7 +167,7 @@ public:
 		for (SizeType i = 0; i < block; ++i) {
 			SizeType index = i + block*mpiRank;
 			if (index >= total) continue;
-			kernel_(index,cs.value(),cs);
+			kernel_(index,0,cs);
 		}
 	}
 
@@ -177,6 +182,10 @@ public:
 	}
 
 private:
+
+	Parallelizer(const Parallelizer&);
+
+	Parallelizer& operator=(const Parallelizer& other );
 
 	static MpiType* mpi_;
 	static SizeType refCounter_;
