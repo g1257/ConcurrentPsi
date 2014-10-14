@@ -25,29 +25,23 @@ public:
 	           void *(*start_routine) (void *),
 	           void *arg)
 	{
-#ifndef USE_PTHREADS
-		noPthreads();
-		return -1;
-#else
+		checkForPthreadsSupport();
 		return pthread_create(thread,attr,start_routine,arg);
-#endif
 	}
 
 	static int join(PthreadType thread, void **retval)
 	{
-#ifndef USE_PTHREADS
-		noPthreads();
-		return -1;
-#else
+		checkForPthreadsSupport();
 		return pthread_join(thread,retval);
-#endif
 	}
 
 private:
 
-	static void noPthreads()
+	static void checkForPthreadsSupport()
 	{
+#ifndef USE_PTHREADS
 		throw PsimagLite::RuntimeError("Please add -DUSE_PTHREADS to the Makefile\n");
+#endif
 	}
 }; // class Pthreads
 

@@ -4,10 +4,11 @@
 
 class KernelInner {
 
+	typedef double RealType;
+
 public:
 
-	typedef ConcurrencyPsi::CriticalStorage CriticalStorageType;
-	typedef CriticalStorageType::ValueType ValueType;
+	typedef ConcurrencyPsi::CriticalStorage<RealType> CriticalStorageType;
 
 	KernelInner(SizeType totalInner)
 	    : totalInner_(totalInner),
@@ -15,14 +16,14 @@ public:
 	{}
 
 	void operator()(SizeType index,
-	                ValueType& v,
+	                SizeType threadNum,
 	                CriticalStorageType& cs) const
 	{
 		int totalKernel=100;
 		int bigNumber = 1000000;
 		for (int j = 0; j < totalKernel; ++j) {
 			for (int mm = 0; mm < bigNumber; mm++)
-				v += (index + 1.0)*(outerIndex_+1.0)*1e-6;
+				cs.value(0,threadNum) += (index + 1.0)*(outerIndex_+1.0)*1e-6;
 		}
 	}
 
@@ -47,8 +48,8 @@ class KernelOuter {
 
 public:
 
-	typedef ConcurrencyPsi::CriticalStorage CriticalStorageType;
-	typedef CriticalStorageType::ValueType ValueType;
+	typedef double RealType;
+	typedef ConcurrencyPsi::CriticalStorage<RealType> CriticalStorageType;
 
 	KernelOuter(SizeType totalOuter, SizeType totalInner, SizeType nthreads)
 	    : totalOuter_(totalOuter),
@@ -56,13 +57,15 @@ public:
 	      pInner_(kernelInner_,nthreads)
 	{}
 
-	void operator()(SizeType index, ValueType& v, CriticalStorageType& cs)
+	void operator()(SizeType index, SizeType threadNum, CriticalStorageType& cs)
 	{
 		//kernelInner_.setOuter(index);
 		InnerStorageType storageInner;
+		RealType tmp = 0;
+		storageInner.push(&tmp);
 		pInner_.launch(storageInner);
 		pInner_.sync(storageInner);
-		v += storageInner.value();
+		cs.value(0, threadNum) += tmp;
 	}
 
 	SizeType size() const { return totalOuter_; }
@@ -78,8 +81,11 @@ int main(int argc, char* argv[])
 {
 	typedef ConcurrencyPsi::Parallelizer<ConcurrencyPsi::TYPE_PTHREADS,
 	                                     KernelOuter> ParallelizerOuterType;
+	typedef KernelOuter::RealType RealType;
+
 	if (argc < 4) {
-		std::cerr<<"USAGE "<<argv[0]<<" totalOuter totalInner nthreads\n";
+		std::cerr<<"USAGE "<<argv[0]<<" totalOuter totalInner nthreadsInner ";
+		std::cerr<<"[nthreadsOuter]\n";
 		return 1;
 	}
 
@@ -91,11 +97,13 @@ int main(int argc, char* argv[])
 	KernelOuter kernelOuter(totalOuter, totalInner, nthreads);
 	ParallelizerOuterType pOuter(kernelOuter,outerPthreads,&argc,&argv);
 	KernelOuter::CriticalStorageType cs;
+	RealType tmp = 0;
+	cs.push(&tmp);
 	pOuter.launch(cs);
 
 	pOuter.sync(cs);
 
 	if (ParallelizerOuterType::canPrint())
-		std::cout<<argv[0]<<" Final Result is "<<cs.value()<<"\n";
+		std::cout<<argv[0]<<" Final Result is "<<tmp<<"\n";
 }
 
