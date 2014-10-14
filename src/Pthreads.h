@@ -15,6 +15,11 @@ public:
 	typedef int DummyType;
 	typedef DummyType PthreadType;
 	typedef DummyType PthreadAttrType;
+	static int pthread_create(PthreadType *,
+	                           const PthreadAttrType*,
+	                           void *(*) (void *),
+	                           void *) { return 1; }
+	static int pthread_join(PthreadType thread, void** retval) { return 1; }
 #else
 	typedef pthread_t PthreadType;
 	typedef pthread_attr_t PthreadAttrType;
@@ -29,7 +34,7 @@ public:
 		return pthread_create(thread,attr,start_routine,arg);
 	}
 
-	static int join(PthreadType thread, void **retval)
+	static int join(PthreadType thread, void** retval)
 	{
 		checkForPthreadsSupport();
 		return pthread_join(thread,retval);

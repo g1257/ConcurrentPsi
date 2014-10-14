@@ -79,7 +79,7 @@ private:
 
 int main(int argc, char* argv[])
 {
-	typedef ConcurrencyPsi::Parallelizer<ConcurrencyPsi::TYPE_MPI,
+	typedef ConcurrencyPsi::Parallelizer<ConcurrencyPsi::TYPE_SERIAL,
 	                                     KernelOuter> ParallelizerOuterType;
 	typedef KernelOuter::RealType RealType;
 
