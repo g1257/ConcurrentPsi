@@ -60,6 +60,8 @@ public:
 	{
 		assert(values_.size() > 0);
 		mpi.sync(values_[0]);
+
+		*vpointer_ = values_[0];
 	}
 
 private:
