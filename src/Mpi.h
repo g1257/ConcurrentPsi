@@ -12,15 +12,21 @@ public:
 
 #ifndef USE_MPI
 
-	enum {COMM_WORLD, MPI_DOUBLE, MPI_SUM};
+	enum {MPI_DOUBLE, MPI_SUM};
 
 	typedef int DummyType;
 	typedef DummyType CommType;
 
 	void MPI_Init(int* argcPtr, char*** argvPtr) { noMpi(); }
+
 	void MPI_Finalize() { noMpi(); }
+
 	void MPI_Comm_rank(CommType comm, int* rank) const { noMpi(); }
+
 	void MPI_Comm_size(CommType comm, int* rank) const { noMpi(); }
+
+	static CommType commWorld() { noMpi(); return 1; }
+
 	void MPI_Comm_split(CommType comm, int color, int key, CommType* newcomm1)
 	{
 		noMpi();
@@ -31,7 +37,11 @@ public:
 
 #else
 	typedef MPI_Comm CommType;
-	CommType COMM_WORLD = MPI_COMM_WORLD;
+
+	static CommType commWorld()
+	{
+		return MPI_COMM_WORLD;
+	}
 #endif
 
 	Mpi(int* argcPtr, char*** argvPtr)
@@ -83,7 +93,7 @@ public:
 
 private:
 
-	void noMpi() const
+	static void noMpi()
 	{
 		throw PsimagLite::RuntimeError("Please add -DUSE_MPI to the Makefile\n");
 	}
@@ -92,7 +102,6 @@ private:
 }; // class Mpi
 
 bool Mpi::init_ = false; // <--- FIXME: linkage in a header file
-
 
 } // namespace ConcurrencyPsi
 
