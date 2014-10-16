@@ -19,9 +19,6 @@ public:
 
 	typedef CriticalStorage<type,RealType> CriticalStorageType;
 
-	void sync(CriticalStorageType&)
-	{}
-
 	static bool canPrint() { return true; }
 };
 
@@ -107,11 +104,6 @@ public:
 		for (SizeType j=0; j < nthreads_; j++) Pthreads::join(threadId[j], 0);
 	}
 
-	void sync(CriticalStorageType& cs)
-	{
-		cs.sync();
-	}
-
 private:
 
 	static void *threadFunctionWrapper(void *dummyPtr)
@@ -183,11 +175,6 @@ public:
 			if (index >= total) continue;
 			kernel_(index,0,cs);
 		}
-	}
-
-	void sync(CriticalStorageType& cs)
-	{
-		cs.sync(*mpi_);
 	}
 
 	static bool canPrint()

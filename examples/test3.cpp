@@ -59,7 +59,7 @@ public:
 		RealType index2 = index;
 		storageInner.push(&index2);
 		pInner_.launch(storageInner);
-		pInner_.sync(storageInner);
+		storageInner.sync();
 		cs.value(0, threadNum) += tmp;
 	}
 
@@ -96,7 +96,7 @@ int main(int argc, char* argv[])
 	cs.push(&tmp);
 	pOuter.launch(cs);
 
-	pOuter.sync(cs);
+	cs.sync();
 
 	if (ParallelizerOuterType::canPrint())
 		std::cout<<argv[0]<<" Final Result is "<<tmp<<"\n";
