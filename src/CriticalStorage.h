@@ -1,6 +1,7 @@
 #ifndef CRITICALSTORAGE_H
 #define CRITICALSTORAGE_H
 #include "Vector.h"
+#include "Mpi.h"
 #include <cassert>
 #include "CriticalReal.h"
 #include "ParallelTypeEnum.h"
@@ -8,15 +9,15 @@
 namespace ConcurrencyPsi {
 
 template<ParallelTypeEnum type, typename RealType>
-class CriticalStorage {
+class CriticalStorageImpl {
 
 public:
 
 	typedef CriticalReal<type,RealType> CriticalRealType;
 
-	CriticalStorage() {}
+	CriticalStorageImpl() {}
 
-	~CriticalStorage()
+	~CriticalStorageImpl()
 	{
 		for (SizeType i = 0; i < values_.size(); ++i) {
 			delete values_[i];
@@ -57,14 +58,97 @@ public:
 
 private:
 
-	CriticalStorage(const CriticalStorage&);
+	CriticalStorageImpl(const CriticalStorageImpl&);
 
-	CriticalStorage& operator=(const CriticalStorage& other );
+	CriticalStorageImpl& operator=(const CriticalStorageImpl& other);
 
 	typename PsimagLite::Vector<CriticalRealType*>::Type values_;
 
-}; // class CriticalStorage (serial)
+}; // class CriticalStorageImpl
 
+template<ParallelTypeEnum type, typename RealType>
+class CriticalStorage {
+
+	typedef CriticalStorageImpl<type,RealType> CriticalStorageImplType;
+
+public:
+
+	CriticalStorage()
+	    : csImpl_()
+	{}
+
+	void sync()
+	{
+		csImpl_.sync();
+	}
+
+	void push(RealType* v)
+	{
+		csImpl_.push(v);
+	}
+
+	void prepare(SizeType nthreads)
+	{
+		csImpl_.prepare(nthreads);
+	}
+
+	RealType& value(SizeType i, SizeType threadNum)
+	{
+		return csImpl_.value(i, threadNum);
+	}
+
+private:
+
+	CriticalStorage(const CriticalStorage&);
+
+	CriticalStorage& operator=(const CriticalStorage& other);
+
+	CriticalStorageImplType csImpl_;
+}; // class CriticalStorage
+
+template<typename RealType>
+class CriticalStorage<TYPE_MPI,RealType> {
+
+	typedef Mpi MpiType;
+	typedef CriticalStorageImpl<TYPE_MPI,RealType> CriticalStorageImplType;
+
+public:
+
+	CriticalStorage()
+	    : csImpl_(),mpi_(0)
+	{}
+
+	void prepare(MpiType* mpi)
+	{
+		mpi_ = mpi;
+	}
+
+	void push(RealType* v)
+	{
+		csImpl_.push(v);
+	}
+
+	void sync()
+	{
+		assert(mpi_);
+		csImpl_.sync(*mpi_);
+	}
+
+	RealType& value(SizeType i, SizeType threadNum)
+	{
+		assert(threadNum == 0);
+		return csImpl_.value(i, threadNum);
+	}
+
+private:
+
+	CriticalStorage(const CriticalStorage&);
+
+	CriticalStorage& operator=(const CriticalStorage& other);
+
+	CriticalStorageImplType csImpl_;
+	MpiType* mpi_;
+}; // class CriticalStorage
 
 } // namespace ConcurrencyPsi
 

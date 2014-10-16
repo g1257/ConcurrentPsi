@@ -165,6 +165,7 @@ public:
 		SizeType total = kernel_.size();
 
 		assert(mpi_);
+		cs.prepare(mpi_);
 		SizeType procs = mpi_->size();
 		SizeType block = static_cast<SizeType>(total/procs);
 		if (total % procs !=0) block++;
