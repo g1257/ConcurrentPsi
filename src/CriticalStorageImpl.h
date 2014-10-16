@@ -12,10 +12,18 @@ public:
 
 	typedef CriticalReal<type,RealType> CriticalRealType;
 
-	CriticalStorageImpl() {}
+	CriticalStorageImpl() : prepared_(false), synced_(false) {}
 
 	~CriticalStorageImpl()
 	{
+		if (!synced_) {
+			PsimagLite::String str("CriticalStorageImpl::dtor(): ");
+			str += " An non-synced object is about to be destroyed.\n";
+			str += "\tThis could indicate a client error. ";
+			str += "(Did you forget to sync?)\n";
+			throw PsimagLite::RuntimeError(str);
+		}
+
 		for (SizeType i = 0; i < values_.size(); ++i) {
 			delete values_[i];
 			values_[i] = 0;
@@ -24,6 +32,12 @@ public:
 
 	void push(RealType* v)
 	{
+		if (prepared_) {
+			PsimagLite::String str("CriticalStorageImpl::push(...): ");
+			str += " Cannot push after prepare has been called\n";
+			throw PsimagLite::RuntimeError(str);
+		}
+
 		CriticalRealType* cr = new CriticalRealType(v);
 		values_.push_back(cr);
 	}
@@ -32,11 +46,19 @@ public:
 	{
 		for (SizeType i = 0; i < values_.size(); ++i)
 			values_[i]->prepare(nthreads);
+
+		prepared_ = true;
+	}
+
+	void setPrepared()
+	{
+		prepared_ = true;
 	}
 
 	RealType& value(SizeType i, SizeType threadNum)
 	{
 		assert(values_.size() > i);
+		assert(prepared_);
 		return values_[i]->operator()(threadNum);
 	}
 
@@ -44,6 +66,8 @@ public:
 	{
 		for (SizeType i = 0; i < values_.size(); ++i)
 			values_[i]->sync();
+
+		synced_ = true;
 	}
 
 	template<typename MpiType>
@@ -51,6 +75,8 @@ public:
 	{
 		for (SizeType i = 0; i < values_.size(); ++i)
 			values_[i]->sync(mpi);
+
+		synced_ = true;
 	}
 
 private:
@@ -59,6 +85,8 @@ private:
 
 	CriticalStorageImpl& operator=(const CriticalStorageImpl& other);
 
+	bool prepared_;
+	bool synced_;
 	typename PsimagLite::Vector<CriticalRealType*>::Type values_;
 
 }; // class CriticalStorageImpl

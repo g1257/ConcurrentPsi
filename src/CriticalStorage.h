@@ -63,6 +63,7 @@ public:
 	void prepare(MpiType* mpi)
 	{
 		mpi_ = mpi;
+		csImpl_.setPrepared();
 	}
 
 	void push(RealType* v)
