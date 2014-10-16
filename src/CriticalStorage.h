@@ -3,68 +3,10 @@
 #include "Vector.h"
 #include "Mpi.h"
 #include <cassert>
-#include "CriticalReal.h"
 #include "ParallelTypeEnum.h"
+#include "CriticalStorageImpl.h"
 
 namespace ConcurrencyPsi {
-
-template<ParallelTypeEnum type, typename RealType>
-class CriticalStorageImpl {
-
-public:
-
-	typedef CriticalReal<type,RealType> CriticalRealType;
-
-	CriticalStorageImpl() {}
-
-	~CriticalStorageImpl()
-	{
-		for (SizeType i = 0; i < values_.size(); ++i) {
-			delete values_[i];
-			values_[i] = 0;
-		}
-	}
-
-	void push(RealType* v)
-	{
-		CriticalRealType* cr = new CriticalRealType(v);
-		values_.push_back(cr);
-	}
-
-	void prepare(SizeType nthreads)
-	{
-		for (SizeType i = 0; i < values_.size(); ++i)
-			values_[i]->prepare(nthreads);
-	}
-
-	RealType& value(SizeType i, SizeType threadNum)
-	{
-		assert(values_.size() > i);
-		return values_[i]->operator()(threadNum);
-	}
-
-	void sync()
-	{
-		for (SizeType i = 0; i < values_.size(); ++i)
-			values_[i]->sync();
-	}
-
-	template<typename MpiType>
-	void sync(MpiType& mpi)
-	{
-		for (SizeType i = 0; i < values_.size(); ++i)
-			values_[i]->sync(mpi);
-	}
-
-private:
-
-	CriticalStorageImpl(const CriticalStorageImpl&);
-
-	CriticalStorageImpl& operator=(const CriticalStorageImpl& other);
-
-	typename PsimagLite::Vector<CriticalRealType*>::Type values_;
-
-}; // class CriticalStorageImpl
 
 template<ParallelTypeEnum type, typename RealType>
 class CriticalStorage {
@@ -148,7 +90,7 @@ private:
 
 	CriticalStorageImplType csImpl_;
 	MpiType* mpi_;
-}; // class CriticalStorage
+}; // class CriticalStorage (mpi)
 
 } // namespace ConcurrencyPsi
 
