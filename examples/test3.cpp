@@ -18,7 +18,7 @@ public:
 	                SomeCriticalStorageType& cs) const
 	{
 		int totalKernel=100;
-		int bigNumber = 1000000;
+		int bigNumber = 10000;
 		RealType outerIndex = cs.value(1,threadNum);
 		for (int j = 0; j < totalKernel; ++j) {
 			for (int mm = 0; mm < bigNumber; mm++)

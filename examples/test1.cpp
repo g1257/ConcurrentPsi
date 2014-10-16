@@ -19,7 +19,7 @@ public:
 	                SomeCriticalStorageType& cs) const
 	{
 		int totalKernel=100;
-		int bigNumber = 1000000;
+		int bigNumber = 10000;
 		for (int j = 0; j < totalKernel; ++j) {
 			for (int mm = 0; mm < bigNumber; mm++)
 				cs.value(0,threadNum) += (index + 1.0)*(outerIndex_+1.0)*1e-6;
