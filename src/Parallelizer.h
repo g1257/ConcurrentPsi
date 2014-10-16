@@ -4,15 +4,32 @@
 #include "Mpi.h"
 #include "Pthreads.h"
 #include <cassert>
+#include "CriticalStorage.h"
 
 namespace ConcurrencyPsi {
 
-enum ParallelTypeEnum {TYPE_SERIAL, TYPE_PTHREADS, TYPE_MPI};
+template<ParallelTypeEnum type,typename KernelType>
+class ParallelizerBase {
 
-template<int type,typename KernelType>
-class Parallelizer {
+protected:
 
-	typedef typename KernelType::CriticalStorageType CriticalStorageType;
+	typedef typename KernelType::RealType RealType;
+
+public:
+
+	typedef CriticalStorage<type,RealType> CriticalStorageType;
+
+	void sync(CriticalStorageType&)
+	{}
+
+	static bool canPrint() { return true; }
+};
+
+template<ParallelTypeEnum type,typename KernelType>
+class Parallelizer : public ParallelizerBase<type,KernelType> {
+
+	typedef ParallelizerBase<type,KernelType> BaseType;
+	typedef typename BaseType::CriticalStorageType CriticalStorageType;
 
 public:
 
@@ -31,22 +48,17 @@ public:
 		}
 	}
 
-	void sync(CriticalStorageType& cs)
-	{
-		cs.syncSerial();
-	}
-
-	static bool canPrint() { return true; }
-
 private:
 
 	KernelType& kernel_;
 }; // class Parallelizer
 
 template<typename KernelType>
-class Parallelizer<TYPE_PTHREADS,KernelType> {
+class Parallelizer<TYPE_PTHREADS,KernelType>
+        : public ParallelizerBase<TYPE_PTHREADS,KernelType> {
 
-	typedef typename KernelType::CriticalStorageType CriticalStorageType;
+	typedef ParallelizerBase<TYPE_PTHREADS,KernelType> BaseType;
+	typedef typename BaseType::CriticalStorageType CriticalStorageType_;
 
 	struct PthreadFunctionStruct {
 		PthreadFunctionStruct()
@@ -57,10 +69,12 @@ class Parallelizer<TYPE_PTHREADS,KernelType> {
 		SizeType blockSize;
 		SizeType total;
 		int threadNum;
-		CriticalStorageType* criticalStorage;
+		CriticalStorageType_* criticalStorage;
 	};
 
 public:
+
+	typedef CriticalStorageType_ CriticalStorageType;
 
 	Parallelizer(KernelType& kernel,
 	             SizeType nPthreads,
@@ -76,7 +90,7 @@ public:
 
 		SizeType total = kernel_.size();
 
-		cs.prepareForPthreads(nthreads_);
+		cs.prepare(nthreads_);
 
 		for (SizeType j=0; j < nthreads_; j++) {
 			int ret=0;
@@ -95,10 +109,8 @@ public:
 
 	void sync(CriticalStorageType& cs)
 	{
-		cs.syncPthreads();
+		cs.sync();
 	}
-
-	static bool canPrint() { return true; }
 
 private:
 
@@ -126,12 +138,14 @@ private:
 }; // class Parallelizer
 
 template<typename KernelType>
-class Parallelizer<TYPE_MPI,KernelType> {
+class Parallelizer<TYPE_MPI,KernelType> : public ParallelizerBase<TYPE_MPI,KernelType> {
 
+	typedef ParallelizerBase<TYPE_MPI,KernelType> BaseType;
 	typedef Mpi MpiType;
-	typedef typename KernelType::CriticalStorageType CriticalStorageType;
 
 public:
+
+	typedef typename BaseType::CriticalStorageType CriticalStorageType;
 
 	Parallelizer(KernelType& kernel,
 	             int nPthreads = 1,
@@ -173,7 +187,7 @@ public:
 
 	void sync(CriticalStorageType& cs)
 	{
-		cs.syncMpi(*mpi_);
+		cs.sync(*mpi_);
 	}
 
 	static bool canPrint()

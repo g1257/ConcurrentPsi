@@ -3,18 +3,18 @@
 #include "Vector.h"
 #include <cassert>
 #include "CriticalReal.h"
+#include "ParallelTypeEnum.h"
 
 namespace ConcurrencyPsi {
 
-template<typename RealType>
+template<ParallelTypeEnum type, typename RealType>
 class CriticalStorage {
 
 public:
 
-	typedef CriticalReal<RealType> CriticalRealType;
+	typedef CriticalReal<type,RealType> CriticalRealType;
 
-	CriticalStorage()
-	{}
+	CriticalStorage() {}
 
 	~CriticalStorage()
 	{
@@ -26,14 +26,14 @@ public:
 
 	void push(RealType* v)
 	{
-		CriticalRealType* cr = new CriticalReal<RealType>(v);
+		CriticalRealType* cr = new CriticalRealType(v);
 		values_.push_back(cr);
 	}
 
-	void prepareForPthreads(SizeType nthreads)
+	void prepare(SizeType nthreads)
 	{
 		for (SizeType i = 0; i < values_.size(); ++i)
-			values_[i]->prepareForPthreads(nthreads);
+			values_[i]->prepare(nthreads);
 	}
 
 	RealType& value(SizeType i, SizeType threadNum)
@@ -42,23 +42,17 @@ public:
 		return values_[i]->operator()(threadNum);
 	}
 
-	void syncPthreads()
+	void sync()
 	{
 		for (SizeType i = 0; i < values_.size(); ++i)
-			values_[i]->syncPthreads();
-	}
-
-	void syncSerial()
-	{
-		for (SizeType i = 0; i < values_.size(); ++i)
-			values_[i]->syncSerial();
+			values_[i]->sync();
 	}
 
 	template<typename MpiType>
-	void syncMpi(MpiType& mpi)
+	void sync(MpiType& mpi)
 	{
 		for (SizeType i = 0; i < values_.size(); ++i)
-			values_[i]->syncMpi(mpi);
+			values_[i]->sync(mpi);
 	}
 
 private:
@@ -69,7 +63,8 @@ private:
 
 	typename PsimagLite::Vector<CriticalRealType*>::Type values_;
 
-}; // class CriticalStorage
+}; // class CriticalStorage (serial)
+
 
 } // namespace ConcurrencyPsi
 

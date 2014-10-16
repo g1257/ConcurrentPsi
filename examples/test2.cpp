@@ -4,20 +4,19 @@
 
 class KernelInner {
 
-	typedef double RealType;
-
 public:
 
-	typedef ConcurrencyPsi::CriticalStorage<RealType> CriticalStorageType;
+	typedef double RealType;
 
 	KernelInner(SizeType totalInner)
 	    : totalInner_(totalInner),
 	      outerIndex_(0)
 	{}
 
+	template<typename SomeCriticalStorageType>
 	void operator()(SizeType index,
 	                SizeType threadNum,
-	                CriticalStorageType& cs) const
+	                SomeCriticalStorageType& cs) const
 	{
 		int totalKernel=100;
 		int bigNumber = 1000000;
@@ -44,12 +43,11 @@ class KernelOuter {
 
 	typedef ConcurrencyPsi::Parallelizer<ConcurrencyPsi::TYPE_PTHREADS,
 	                                     KernelInner> ParallelizerInnerType;
-	typedef KernelInner::CriticalStorageType InnerStorageType;
+	typedef ParallelizerInnerType::CriticalStorageType InnerStorageType;
 
 public:
 
 	typedef double RealType;
-	typedef ConcurrencyPsi::CriticalStorage<RealType> CriticalStorageType;
 
 	KernelOuter(SizeType totalOuter, SizeType totalInner, SizeType nthreads)
 	    : totalOuter_(totalOuter),
@@ -57,7 +55,8 @@ public:
 	      pInner_(kernelInner_,nthreads)
 	{}
 
-	void operator()(SizeType index, SizeType threadNum, CriticalStorageType& cs)
+	template<typename SomeCriticalStorageType>
+	void operator()(SizeType index, SizeType threadNum, SomeCriticalStorageType& cs)
 	{
 		//kernelInner_.setOuter(index);
 		InnerStorageType storageInner;
@@ -96,7 +95,7 @@ int main(int argc, char* argv[])
 	std::cout<<"nested loop example \n";
 	KernelOuter kernelOuter(totalOuter, totalInner, nthreads);
 	ParallelizerOuterType pOuter(kernelOuter,outerPthreads,&argc,&argv);
-	KernelOuter::CriticalStorageType cs;
+	ParallelizerOuterType::CriticalStorageType cs;
 	RealType tmp = 0;
 	cs.push(&tmp);
 	pOuter.launch(cs);

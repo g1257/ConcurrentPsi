@@ -1,10 +1,11 @@
 #ifndef CRITICALREAL_H
 #define CRITICALREAL_H
 #include "Vector.h"
+#include "ParallelTypeEnum.h"
 
 namespace ConcurrencyPsi {
 
-template<typename RealType>
+template<ParallelTypeEnum type, typename RealType>
 class CriticalReal {
 
 public:
@@ -32,20 +33,16 @@ public:
 		return values_[threadNum];
 	}
 
-	void prepareForPthreads(SizeType nthreads)
+	void prepare(SizeType nthreads)
 	{
+		if (nthreads <= 1) return;
 		assert(vpointer_);
 		values_.resize(nthreads,0.0);
 		for (SizeType i = 0; i< values_.size(); ++i)
 			values_[i] = *vpointer_;
 	}
 
-	void syncSerial()
-	{
-		*vpointer_ = values_[0];
-	}
-
-	void syncPthreads()
+	void sync()
 	{
 		assert(values_.size() > 0);
 		for (SizeType i = 1; i < values_.size(); ++i) {
@@ -56,7 +53,7 @@ public:
 	}
 
 	template<typename MpiType>
-	void syncMpi(MpiType& mpi)
+	void sync(MpiType& mpi)
 	{
 		assert(values_.size() > 0);
 		mpi.sync(values_[0]);
