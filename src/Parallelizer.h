@@ -5,6 +5,7 @@
 #include "Pthreads.h"
 #include <cassert>
 #include "CriticalStorage.h"
+#include "TypeToString.h"
 
 namespace ConcurrencyPsi {
 
@@ -31,7 +32,7 @@ class Parallelizer : public ParallelizerBase<type,KernelType> {
 public:
 
 	Parallelizer(KernelType& kernel,
-	             int nPthreads = 1,
+	             int n = 1,
 	             int* argcPtr = 0,
 	             char*** argvPtr = 0)
 	    : kernel_(kernel)
@@ -140,12 +141,30 @@ public:
 	typedef typename BaseType::CriticalStorageType CriticalStorageType;
 
 	Parallelizer(KernelType& kernel,
-	             int nPthreads = 1,
+	             int mpiSizeArg,
 	             int* argcPtr = 0,
 	             char*** argvPtr = 0)
-	    : kernel_(kernel)
+	    : kernel_(kernel),mpiSizeArg_(mpiSizeArg)
 	{
-		if (!mpi_) mpi_ = new MpiType(argcPtr,argvPtr);
+		if (!mpi_) {
+			mpi_ = new MpiType(argcPtr,argvPtr);
+			groups_.push_back(Mpi::COMM_WORLD);
+			mpiSizeUsed_ = 1;
+		}
+
+		mpiSizeUsed_ *= mpiSizeArg;
+		int mpiWorldSize = mpi_->size(Mpi::COMM_WORLD);
+		if (mpiSizeUsed_ > mpiWorldSize) {
+			PsimagLite::String str("Parallelizer<MPI>::ctor(...) ");
+			str += " Not enough mpi processes. Available= "+ ttos(mpiWorldSize);
+			str += " Requested (so far)= " + ttos(mpiSizeUsed_) + "\n";
+			throw PsimagLite::RuntimeError(str);
+		}
+
+		assert(groups_.size() > 0);
+		Mpi::CommType prevComm = groups_[groups_.size() - 1];
+		mpiComm_ = mpi_->split(mpiSizeArg,prevComm);
+		groups_.push_back(mpiComm_);
 		refCounter_++;
 	}
 
@@ -165,11 +184,11 @@ public:
 		SizeType total = kernel_.size();
 
 		assert(mpi_);
-		cs.prepare(mpi_);
-		SizeType procs = mpi_->size();
+		cs.prepare(mpi_, mpiComm_);
+		SizeType procs = mpi_->size(mpiComm_);
 		SizeType block = static_cast<SizeType>(total/procs);
 		if (total % procs !=0) block++;
-		SizeType mpiRank = mpi_->rank();
+		SizeType mpiRank = mpi_->rank(mpiComm_);
 
 		for (SizeType i = 0; i < block; ++i) {
 			SizeType index = i + block*mpiRank;
@@ -180,7 +199,7 @@ public:
 
 	static bool canPrint()
 	{
-		return (mpi_->rank() == 0);
+		return (mpi_->rank(Mpi::COMM_WORLD) == 0);
 	}
 
 private:
@@ -191,7 +210,11 @@ private:
 
 	static MpiType* mpi_;
 	static SizeType refCounter_;
+	static PsimagLite::Vector<Mpi::CommType>::Type groups_;
+	static int mpiSizeUsed_;
 	KernelType& kernel_;
+	int mpiSizeArg_;
+	Mpi::CommType mpiComm_;
 }; // class Parallelizer
 
 template<typename KernelType>
@@ -200,6 +223,11 @@ Mpi* Parallelizer<TYPE_MPI,KernelType>::mpi_ = 0;
 template<typename KernelType>
 SizeType Parallelizer<TYPE_MPI,KernelType>::refCounter_ = 0;
 
+template<typename KernelType>
+PsimagLite::Vector<Mpi::CommType>::Type Parallelizer<TYPE_MPI,KernelType>::groups_;
+
+template<typename KernelType>
+int Parallelizer<TYPE_MPI,KernelType>::mpiSizeUsed_ = 1;
 } // namespace ConcurrencyPsi
 
 #endif // PARALLELIZER_H

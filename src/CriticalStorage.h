@@ -60,9 +60,10 @@ public:
 	    : csImpl_(),mpi_(0)
 	{}
 
-	void prepare(MpiType* mpi)
+	void prepare(MpiType* mpi, Mpi::CommType comm)
 	{
 		mpi_ = mpi;
+		comm_ = comm;
 		csImpl_.setPrepared();
 	}
 
@@ -74,7 +75,7 @@ public:
 	void sync()
 	{
 		assert(mpi_);
-		csImpl_.sync(*mpi_);
+		csImpl_.sync(*mpi_, comm_);
 	}
 
 	RealType& value(SizeType i, SizeType threadNum)
@@ -91,6 +92,7 @@ private:
 
 	CriticalStorageImplType csImpl_;
 	MpiType* mpi_;
+	Mpi::CommType comm_;
 }; // class CriticalStorage (mpi)
 
 } // namespace ConcurrencyPsi

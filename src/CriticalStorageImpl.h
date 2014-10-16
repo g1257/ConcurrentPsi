@@ -71,10 +71,10 @@ public:
 	}
 
 	template<typename MpiType>
-	void sync(MpiType& mpi)
+	void sync(MpiType& mpi, typename MpiType::CommType comm)
 	{
 		for (SizeType i = 0; i < values_.size(); ++i)
-			values_[i]->sync(mpi);
+			values_[i]->sync(mpi, comm);
 
 		synced_ = true;
 	}
