@@ -2,31 +2,20 @@
 #define MPIHOLDER_H
 #include "Mpi.h"
 #include <cassert>
-#include "ParallelTypeEnum.h"
 #include <cstdlib>
 #include "Vector.h"
 #include "String.h"
 
 namespace ConcurrencyPsi {
 
-template<ParallelTypeEnum type>
 class MpiHolder {
-
-protected:
-
-	MpiHolder(int* argcPtr, char*** argvPtr)
-	{}
-};
-
-template<>
-class MpiHolder<TYPE_MPI> {
 
 	typedef Mpi MpiType;
 	typedef Mpi::CommType CommType;
 
 protected:
 
-	MpiHolder(int* argcPtr, char*** argvPtr)
+	MpiHolder(int* argcPtr, char*** argvPtr, SizeType mpiSizeArg)
 	{
 		if (!mpi_) {
 			mpi_ = new MpiType(argcPtr,argvPtr);
@@ -41,17 +30,22 @@ protected:
 			mpiSizeUsed_ = 1;
 			return;
 		}
-	}
 
-	CommType addGroup(SizeType mpiSizeArg)
-	{
 		SizeType groupSize = groups_.size();
 		assert(groupSize > 0);
 		if (groupSize & 1) {
 			split(mpiSizeArg);
 			assert(groups_.size() == groupSize + 2);
-			return groups_[groupSize];
 		}
+	}
+
+	static CommType currentGroup()
+	{
+		SizeType groupSize = groups_.size();
+		assert(groupSize > 1);
+
+		if (groupSize & 1)
+			return groups_[groupSize];
 
 		return groups_[groupSize-1];
 	}
@@ -106,11 +100,11 @@ private:
 	static int mpiSizeUsed_;
 };
 
-Mpi* MpiHolder<TYPE_MPI>::mpi_ = 0;
+Mpi* MpiHolder::mpi_ = 0; // FIXME: linkage in header
 
-PsimagLite::Vector<Mpi::CommType>::Type MpiHolder<TYPE_MPI>::groups_;
+PsimagLite::Vector<Mpi::CommType>::Type MpiHolder::groups_; // FIXME: linkage in header
 
-int MpiHolder<TYPE_MPI>::mpiSizeUsed_ = 1;
+int MpiHolder::mpiSizeUsed_ = 1; // FIXME: linkage in header
 
 } // namespace ConcurrencyPsi
 

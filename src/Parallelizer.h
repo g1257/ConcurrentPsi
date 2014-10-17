@@ -10,21 +10,34 @@
 namespace ConcurrencyPsi {
 
 template<ParallelTypeEnum type,typename KernelType>
-class ParallelizerBase : public MpiHolder<type> {
+class ParallelizerBase {
 
 protected:
 
 	typedef typename KernelType::RealType RealType;
-
-	ParallelizerBase(int* argcPtr, char*** argvPtr)
-	    : MpiHolder<type>(argcPtr,argvPtr)
-	{}
 
 public:
 
 	typedef CriticalStorage<type,RealType> CriticalStorageType;
 
 	static bool canPrint() { return true; }
+};
+
+template<typename KernelType>
+class ParallelizerBase<TYPE_MPI, KernelType> : public MpiHolder {
+
+protected:
+
+	typedef typename KernelType::RealType RealType;
+
+	ParallelizerBase(int* argcPtr, char*** argvPtr, SizeType mpiSizeArg)
+	    : MpiHolder(argcPtr,argvPtr,mpiSizeArg)
+	{}
+
+public:
+
+	typedef CriticalStorage<TYPE_MPI,RealType> CriticalStorageType;
+
 };
 
 template<ParallelTypeEnum type,typename KernelType>
@@ -82,7 +95,7 @@ public:
 	             SizeType nPthreads,
 	             int* argcPtr = 0,
 	             char*** argvPtr = 0)
-	    : BaseType(argcPtr, argvPtr), kernel_(kernel),nthreads_(nPthreads)
+	    : kernel_(kernel),nthreads_(nPthreads)
 	{}
 
 	void launch(CriticalStorageType& cs)
@@ -148,9 +161,9 @@ public:
 	             int mpiSizeArg,
 	             int* argcPtr = 0,
 	             char*** argvPtr = 0)
-	    : BaseType(argcPtr,argvPtr),
+	    : BaseType(argcPtr,argvPtr,mpiSizeArg),
 	      kernel_(kernel),
-	      mpiComm_(BaseType::addGroup(mpiSizeArg))
+	      mpiComm_(BaseType::currentGroup())
 	{}
 
 	void launch(CriticalStorageType& cs)
