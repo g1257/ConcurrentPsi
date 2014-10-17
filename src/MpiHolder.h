@@ -12,30 +12,17 @@ namespace ConcurrencyPsi {
 template<ParallelTypeEnum type>
 class MpiHolder {
 
-	class EmptyClass {};
-
 protected:
 
 	MpiHolder(int* argcPtr, char*** argvPtr)
 	{}
-
-	static EmptyClass& mpi()
-	{
-		return mpi_;
-	}
-
-private:
-
-	static EmptyClass mpi_;
 };
-
-template<ParallelTypeEnum type>
-typename MpiHolder<type>::EmptyClass MpiHolder<type>::mpi_;
 
 template<>
 class MpiHolder<TYPE_MPI> {
 
 	typedef Mpi MpiType;
+	typedef Mpi::CommType CommType;
 
 protected:
 
@@ -50,8 +37,35 @@ protected:
 				throw PsimagLite::RuntimeError(str);
 			}
 
+			groups_.push_back(Mpi::commWorld());
+			mpiSizeUsed_ = 1;
 			return;
 		}
+	}
+
+	CommType addGroup(SizeType mpiSizeArg)
+	{
+		assert(groups_.size() > 0);
+		Mpi::CommType prevComm = groups_[groups_.size() - 1];
+		if (mpiSizeArg == 0) mpiSizeArg = mpi_->size(prevComm);
+
+		mpiSizeUsed_ *= mpiSizeArg;
+		int mpiWorldSize = mpi_->size(Mpi::commWorld());
+		if (mpiSizeUsed_ > mpiWorldSize) {
+			PsimagLite::String str("MpiHolder<MPI>::addGroup(...) ");
+			str += " Not enough mpi processes. Available= "+ ttos(mpiWorldSize);
+			str += " Requested (so far)= " + ttos(mpiSizeUsed_) + "\n";
+			throw PsimagLite::RuntimeError(str);
+		}
+
+		CommType mpiComm = mpi_->split(mpiSizeArg,prevComm);
+		std::cout<<mpiComm<<" --- HERE ";
+		for (SizeType i = 0; i < groups_.size(); ++i)
+			std::cout<<groups_.size()<<" ";
+		std::cout<<"\n";
+		sleep(1);
+		groups_.push_back(mpiComm);
+		return mpiComm;
 	}
 
 	static MpiType& mpi()
@@ -71,9 +85,15 @@ private:
 	}
 
 	static MpiType* mpi_;
+	static PsimagLite::Vector<Mpi::CommType>::Type groups_;
+	static int mpiSizeUsed_;
 };
 
 Mpi* MpiHolder<TYPE_MPI>::mpi_ = 0;
+
+PsimagLite::Vector<Mpi::CommType>::Type MpiHolder<TYPE_MPI>::groups_;
+
+int MpiHolder<TYPE_MPI>::mpiSizeUsed_ = 1;
 
 } // namespace ConcurrencyPsi
 

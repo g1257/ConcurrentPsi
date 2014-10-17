@@ -3,6 +3,7 @@
 #ifdef USE_MPI
 #include <mpi.h>
 #endif
+#include <unistd.h>
 
 namespace ConcurrencyPsi {
 
@@ -17,6 +18,8 @@ public:
 	typedef int DummyType;
 	typedef DummyType CommType;
 
+	static CommType commWorld() { noMpi(); return 1; }
+
 	void MPI_Init(int* argcPtr, char*** argvPtr) { noMpi(); }
 
 	void MPI_Finalize() { noMpi(); }
@@ -25,7 +28,7 @@ public:
 
 	void MPI_Comm_size(CommType comm, int* rank) const { noMpi(); }
 
-	static CommType commWorld() { noMpi(); return 1; }
+	void MPI_Barrier(CommType comm) const { noMpi(); }
 
 	void MPI_Comm_split(CommType comm, int color, int key, CommType* newcomm1)
 	{
@@ -83,11 +86,24 @@ public:
 
 	CommType split(int size, CommType comm)
 	{
+		int me0 = rank(Mpi::commWorld());
 		int me = rank(comm);
-		int color = me % size;
+		int color = me/size;
 		int key = 0;
 		CommType newcomm1;
 		MPI_Comm_split(comm, color, key, &newcomm1);
+		int localrank = rank(newcomm1);
+		std::cout<<"size= "<<size<<" me0="<<me0<<" localrank= "<<localrank;
+		std::cout<<" me= "<<me<<" color="<<color<<" comm="<<comm<<" "<<newcomm1<<"\n";
+		std::cout.flush();
+		MPI_Barrier(Mpi::commWorld());
+		sleep(1);
+		if (me0 == 0) {
+			std::cout<<"--------------------\n";
+			std::cout.flush();
+		}
+
+		sleep(1);
 		return newcomm1;
 	}
 

@@ -85,16 +85,18 @@ int main(int argc, char* argv[])
 	typedef KernelOuter::RealType RealType;
 
 	if (argc < 4) {
-		std::cerr<<"USAGE "<<argv[0]<<" totalOuter totalInner nthreads\n";
+		std::cerr<<"USAGE "<<argv[0]<<" totalOuter totalInner nthreads ";
+		std::cerr<<"[mpiOuter]\n";
 		return 1;
 	}
 
 	SizeType totalOuter = atoi(argv[1]);
 	SizeType totalInner = atoi(argv[2]);
 	SizeType nthreads = atoi(argv[3]);
+	SizeType mpiOuter = (argc <= 4) ? 0 : atoi(argv[4]);
 	std::cout<<"nested loop example \n";
 	KernelOuter kernelOuter(totalOuter, totalInner, nthreads);
-	ParallelizerOuterType pOuter(kernelOuter,1,&argc,&argv);
+	ParallelizerOuterType pOuter(kernelOuter,mpiOuter,&argc,&argv);
 	ParallelizerOuterType::CriticalStorageType cs;
 	RealType tmp = 0;
 	cs.push(&tmp);

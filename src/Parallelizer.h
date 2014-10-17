@@ -148,27 +148,10 @@ public:
 	             int mpiSizeArg,
 	             int* argcPtr = 0,
 	             char*** argvPtr = 0)
-	    : BaseType(argcPtr,argvPtr),kernel_(kernel),mpiSizeArg_(mpiSizeArg)
-	{
-		if (groups_.size() == 0) {
-			groups_.push_back(Mpi::commWorld());
-			mpiSizeUsed_ = 1;
-		}
-
-		mpiSizeUsed_ *= mpiSizeArg;
-		int mpiWorldSize = BaseType::mpi().size(Mpi::commWorld());
-		if (mpiSizeUsed_ > mpiWorldSize) {
-			PsimagLite::String str("Parallelizer<MPI>::ctor(...) ");
-			str += " Not enough mpi processes. Available= "+ ttos(mpiWorldSize);
-			str += " Requested (so far)= " + ttos(mpiSizeUsed_) + "\n";
-			throw PsimagLite::RuntimeError(str);
-		}
-
-		assert(groups_.size() > 0);
-		Mpi::CommType prevComm = groups_[groups_.size() - 1];
-		mpiComm_ = BaseType::mpi().split(mpiSizeArg,prevComm);
-		groups_.push_back(mpiComm_);
-	}
+	    : BaseType(argcPtr,argvPtr),
+	      kernel_(kernel),
+	      mpiComm_(BaseType::addGroup(mpiSizeArg))
+	{}
 
 	void launch(CriticalStorageType& cs)
 	{
@@ -198,18 +181,10 @@ private:
 
 	Parallelizer& operator=(const Parallelizer& other);
 
-	static PsimagLite::Vector<Mpi::CommType>::Type groups_;
-	static int mpiSizeUsed_;
 	KernelType& kernel_;
-	int mpiSizeArg_;
 	Mpi::CommType mpiComm_;
 }; // class Parallelizer
 
-template<typename KernelType>
-PsimagLite::Vector<Mpi::CommType>::Type Parallelizer<TYPE_MPI,KernelType>::groups_;
-
-template<typename KernelType>
-int Parallelizer<TYPE_MPI,KernelType>::mpiSizeUsed_ = 1;
 } // namespace ConcurrencyPsi
 
 #endif // PARALLELIZER_H
