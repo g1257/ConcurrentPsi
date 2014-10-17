@@ -3,7 +3,7 @@
 #include <cassert>
 #include "CriticalReal.h"
 
-namespace ConcurrencyPsi {
+namespace ConcurrentPsi {
 
 template<ParallelTypeEnum type, typename RealType>
 class CriticalStorageImpl {
@@ -91,7 +91,7 @@ private:
 
 }; // class CriticalStorageImpl
 
-} //namespace ConcurrencyPsi
+} //namespace ConcurrentPsi
 
 #endif // CRITICALSTORAGEIMPL_H
 

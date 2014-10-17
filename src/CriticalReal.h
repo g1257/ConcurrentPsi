@@ -3,7 +3,7 @@
 #include "Vector.h"
 #include "ParallelTypeEnum.h"
 
-namespace ConcurrencyPsi {
+namespace ConcurrentPsi {
 
 template<ParallelTypeEnum type, typename RealType>
 class CriticalReal {
@@ -72,7 +72,7 @@ private:
 
 }; // class CriticalReal
 
-} // namespace ConcurrencyPsi
+} // namespace ConcurrentPsi
 
 #endif // CRITICALREAL_H
 

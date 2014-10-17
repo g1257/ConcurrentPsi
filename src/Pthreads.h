@@ -5,7 +5,7 @@
 #include <pthread.h>
 #endif
 
-namespace ConcurrencyPsi {
+namespace ConcurrentPsi {
 
 class Pthreads {
 
@@ -50,7 +50,7 @@ private:
 	}
 }; // class Pthreads
 
-} // namespace ConcurrencyPsi
+} // namespace ConcurrentPsi
 
 #endif // PTHREADS_H
 

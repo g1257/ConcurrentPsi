@@ -6,7 +6,7 @@
 #include "Vector.h"
 #include "String.h"
 
-namespace ConcurrencyPsi {
+namespace ConcurrentPsi {
 
 class MpiHolder {
 
@@ -128,7 +128,7 @@ PsimagLite::Vector<Mpi::CommType>::Type MpiHolder::groups_; // FIXME: linkage in
 int MpiHolder::mpiSizeUsed_ = 1; // FIXME: linkage in header
 
 PsimagLite::Vector<SizeType>::Type MpiHolder::mpiSizes_; // FIXME: linkage in header
-} // namespace ConcurrencyPsi
+} // namespace ConcurrentPsi
 
 #endif // MPIHOLDER_H
 

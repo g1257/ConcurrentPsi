@@ -7,7 +7,7 @@
 #include "TypeToString.h"
 #include "MpiHolder.h"
 
-namespace ConcurrencyPsi {
+namespace ConcurrentPsi {
 
 template<ParallelTypeEnum type,typename KernelType>
 class ParallelizerBase {
@@ -201,7 +201,7 @@ private:
 	Mpi::CommType mpiComm_;
 }; // class Parallelizer
 
-} // namespace ConcurrencyPsi
+} // namespace ConcurrentPsi
 
 #endif // PARALLELIZER_H
 

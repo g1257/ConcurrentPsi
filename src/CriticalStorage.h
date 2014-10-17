@@ -6,7 +6,7 @@
 #include "ParallelTypeEnum.h"
 #include "CriticalStorageImpl.h"
 
-namespace ConcurrencyPsi {
+namespace ConcurrentPsi {
 
 template<ParallelTypeEnum type, typename RealType>
 class CriticalStorage {
@@ -95,7 +95,7 @@ private:
 	Mpi::CommType comm_;
 }; // class CriticalStorage (mpi)
 
-} // namespace ConcurrencyPsi
+} // namespace ConcurrentPsi
 
 #endif // CRITICALSTORAGE_H
 

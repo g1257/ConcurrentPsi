@@ -41,7 +41,7 @@ private:
 
 class KernelOuter {
 
-	typedef ConcurrencyPsi::Parallelizer<ConcurrencyPsi::TYPE_PTHREADS,
+	typedef ConcurrentPsi::Parallelizer<ConcurrentPsi::TYPE_PTHREADS,
 	                                     KernelInner> ParallelizerInnerType;
 	typedef ParallelizerInnerType::CriticalStorageType InnerStorageType;
 
@@ -78,7 +78,7 @@ private:
 
 int main(int argc, char* argv[])
 {
-	typedef ConcurrencyPsi::Parallelizer<ConcurrencyPsi::TYPE_PTHREADS,
+	typedef ConcurrentPsi::Parallelizer<ConcurrentPsi::TYPE_PTHREADS,
 	                                     KernelOuter> ParallelizerOuterType;
 	typedef KernelOuter::RealType RealType;
 

@@ -5,7 +5,7 @@
 #endif
 #include <unistd.h>
 
-namespace ConcurrencyPsi {
+namespace ConcurrentPsi {
 
 class Mpi {
 
@@ -123,7 +123,7 @@ private:
 
 bool Mpi::init_ = false; // <--- FIXME: linkage in a header file
 
-} // namespace ConcurrencyPsi
+} // namespace ConcurrentPsi
 
 #endif // MPI_H
 
