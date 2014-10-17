@@ -15,6 +15,8 @@ class CriticalStorage {
 
 public:
 
+	typedef typename CriticalStorageImplType::ConcurrentPatternType ConcurrentPatternType;
+
 	CriticalStorage()
 	    : csImpl_()
 	{}
@@ -24,9 +26,9 @@ public:
 		csImpl_.sync();
 	}
 
-	void push(RealType* v)
+	void push(RealType* v, const ConcurrentPatternType& concurrentPattern)
 	{
-		csImpl_.push(v);
+		csImpl_.push(v,concurrentPattern);
 	}
 
 	void prepare(SizeType nthreads)
@@ -56,6 +58,8 @@ class CriticalStorage<TYPE_MPI,RealType> {
 
 public:
 
+	typedef typename CriticalStorageImplType::ConcurrentPatternType ConcurrentPatternType;
+
 	CriticalStorage()
 	    : csImpl_(),mpi_(0)
 	{}
@@ -67,9 +71,9 @@ public:
 		csImpl_.setPrepared();
 	}
 
-	void push(RealType* v)
+	void push(RealType* v, const ConcurrentPatternType& concurrentPattern)
 	{
-		csImpl_.push(v);
+		csImpl_.push(v, concurrentPattern);
 	}
 
 	void sync(bool doIt = true)

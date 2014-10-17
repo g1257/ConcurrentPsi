@@ -38,6 +38,7 @@ class KernelOuter {
 	typedef ConcurrentPsi::Parallelizer<ConcurrentPsi::TYPE_PTHREADS,
 	                                     KernelInner> ParallelizerInnerType;
 	typedef ParallelizerInnerType::CriticalStorageType InnerStorageType;
+	typedef InnerStorageType::ConcurrentPatternType ConcurrentPatternType;
 
 public:
 
@@ -46,7 +47,9 @@ public:
 	KernelOuter(SizeType totalOuter, SizeType totalInner, SizeType nthreads)
 	    : totalOuter_(totalOuter),
 	      kernelInner_(totalInner),
-	      pInner_(kernelInner_,nthreads)
+	      pInner_(kernelInner_,nthreads),
+	      innerPattern_(ConcurrentPatternType::PATTERN_REDUCE,
+	                    ConcurrentPatternType::PATTERN_SUM)
 	{}
 
 	template<typename SomeCriticalStorageType>
@@ -54,10 +57,10 @@ public:
 	{
 		InnerStorageType storageInner;
 		RealType tmp = 0;
-		storageInner.push(&tmp);
+		storageInner.push(&tmp, innerPattern_);
 		// We can't mark a SizeType as critical yet, only reals, so we must convert
 		RealType index2 = index;
-		storageInner.push(&index2);
+		storageInner.push(&index2, innerPattern_);
 		pInner_.launch(storageInner);
 		storageInner.sync();
 		cs.value(0, threadNum) += tmp;
@@ -70,6 +73,7 @@ private:
 	SizeType totalOuter_;
 	KernelInner kernelInner_;
 	ParallelizerInnerType pInner_;
+	ConcurrentPatternType innerPattern_;
 };
 
 int main(int argc, char* argv[])
@@ -77,6 +81,8 @@ int main(int argc, char* argv[])
 	typedef ConcurrentPsi::Parallelizer<ConcurrentPsi::TYPE_PTHREADS,
 	                                     KernelOuter> ParallelizerOuterType;
 	typedef KernelOuter::RealType RealType;
+	typedef ParallelizerOuterType::CriticalStorageType OuterStorageType;
+	typedef OuterStorageType::ConcurrentPatternType ConcurrentPatternType;
 
 	if (argc < 4) {
 		std::cerr<<"USAGE "<<argv[0]<<" totalOuter totalInner nthreadsInner ";
@@ -91,9 +97,11 @@ int main(int argc, char* argv[])
 	std::cout<<"nested loop example \n";
 	KernelOuter kernelOuter(totalOuter, totalInner, nthreads);
 	ParallelizerOuterType pOuter(kernelOuter,outerPthreads,&argc,&argv);
-	ParallelizerOuterType::CriticalStorageType cs;
+	OuterStorageType cs;
+	ConcurrentPatternType outerPattern(ConcurrentPatternType::PATTERN_REDUCE,
+	                                   ConcurrentPatternType::PATTERN_SUM);
 	RealType tmp = 0;
-	cs.push(&tmp);
+	cs.push(&tmp, outerPattern);
 	pOuter.launch(cs);
 
 	cs.sync();

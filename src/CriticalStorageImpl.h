@@ -2,6 +2,7 @@
 #define CRITICALSTORAGEIMPL_H
 #include <cassert>
 #include "CriticalReal.h"
+#include "ConcurrentPattern.h"
 
 namespace ConcurrentPsi {
 
@@ -11,6 +12,7 @@ class CriticalStorageImpl {
 public:
 
 	typedef CriticalReal<type,RealType> CriticalRealType;
+	typedef ConcurrentPattern ConcurrentPatternType;
 
 	CriticalStorageImpl() : prepared_(false), synced_(false) {}
 
@@ -30,7 +32,7 @@ public:
 		}
 	}
 
-	void push(RealType* v)
+	void push(RealType* v, const ConcurrentPatternType& concurrentPattern)
 	{
 		if (prepared_) {
 			PsimagLite::String str("CriticalStorageImpl::push(...): ");

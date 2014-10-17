@@ -44,6 +44,7 @@ class KernelOuter {
 	typedef ConcurrentPsi::Parallelizer<ConcurrentPsi::TYPE_MPI,
 	                                     KernelInner> ParallelizerInnerType;
 	typedef ParallelizerInnerType::CriticalStorageType InnerStorageType;
+	typedef InnerStorageType::ConcurrentPatternType ConcurrentPatternType;
 
 public:
 
@@ -52,7 +53,9 @@ public:
 	KernelOuter(SizeType totalOuter, SizeType totalInner, SizeType nthreads)
 	    : totalOuter_(totalOuter),
 	      kernelInner_(totalInner),
-	      pInner_(kernelInner_,nthreads)
+	      pInner_(kernelInner_,nthreads),
+	      innerPattern_(ConcurrentPatternType::PATTERN_REDUCE,
+	                    ConcurrentPatternType::PATTERN_SUM)
 	{}
 
 	template<typename SomeCriticalStorageType>
@@ -63,7 +66,7 @@ public:
 		kernelInner_.setOuter(index);
 		InnerStorageType storageInner;
 		RealType tmp = 0;
-		storageInner.push(&tmp);
+		storageInner.push(&tmp, innerPattern_);
 		pInner_.launch(storageInner);
 		storageInner.sync();
 		cs.value(0, threadNum) += tmp;
@@ -76,6 +79,7 @@ private:
 	SizeType totalOuter_;
 	KernelInner kernelInner_;
 	ParallelizerInnerType pInner_;
+	ConcurrentPatternType innerPattern_;
 };
 
 int main(int argc, char* argv[])
@@ -83,6 +87,8 @@ int main(int argc, char* argv[])
 	typedef ConcurrentPsi::Parallelizer<ConcurrentPsi::TYPE_MPI,
 	                                     KernelOuter> ParallelizerOuterType;
 	typedef KernelOuter::RealType RealType;
+	typedef ParallelizerOuterType::CriticalStorageType OuterStorageType;
+	typedef OuterStorageType::ConcurrentPatternType ConcurrentPatternType;
 
 	if (argc < 5) {
 		std::cerr<<"USAGE "<<argv[0]<<" totalOuter totalInner mpiInner mpiOuter\n";
@@ -96,9 +102,11 @@ int main(int argc, char* argv[])
 	std::cout<<"nested loop example \n";
 	KernelOuter kernelOuter(totalOuter, totalInner, mpiInner);
 	ParallelizerOuterType pOuter(kernelOuter,mpiOuter,&argc,&argv);
-	ParallelizerOuterType::CriticalStorageType cs;
+	OuterStorageType cs;
+	ConcurrentPatternType outerPattern(ConcurrentPatternType::PATTERN_REDUCE,
+	                                   ConcurrentPatternType::PATTERN_SUM);
 	RealType tmp = 0;
-	cs.push(&tmp);
+	cs.push(&tmp, outerPattern);
 	pOuter.launch(cs);
 
 	cs.sync();
