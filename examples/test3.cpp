@@ -20,10 +20,13 @@ public:
 		int totalKernel=100;
 		int bigNumber = 10000;
 		RealType outerIndex = cs.value(1,threadNum);
+		RealType sum = 0.0;
 		for (int j = 0; j < totalKernel; ++j) {
 			for (int mm = 0; mm < bigNumber; mm++)
-				cs.value(0,threadNum) += (index + 1.0)*(outerIndex+1.0)*1e-6;
+				sum += (index + 1.0)*(outerIndex+1.0)*1e-6;
 		}
+
+		cs.value(0,threadNum) += sum;
 	}
 
 	SizeType size() const { return totalInner_; }
