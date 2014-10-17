@@ -31,11 +31,27 @@ protected:
 			return;
 		}
 
+		mpiSizes_.push_back(mpiSizeArg);
 		SizeType groupSize = groups_.size();
 		assert(groupSize > 0);
 		if (groupSize & 1) {
 			split(mpiSizeArg);
 			assert(groups_.size() == groupSize + 2);
+		}
+	}
+
+	~MpiHolder()
+	{
+		SizeType groupSize = groups_.size();
+		if (groupSize > 2) {
+			groups_.pop_back();
+			groups_.pop_back();
+		}
+
+		SizeType nested = mpiSizes_.size();
+		if (nested > 0) {
+			mpiSizeUsed_ /= mpiSizes_[nested-1];
+			mpiSizes_.pop_back();
 		}
 	}
 
@@ -98,6 +114,7 @@ private:
 	static MpiType* mpi_;
 	static PsimagLite::Vector<Mpi::CommType>::Type groups_;
 	static int mpiSizeUsed_;
+	static PsimagLite::Vector<SizeType>::Type mpiSizes_;
 };
 
 Mpi* MpiHolder::mpi_ = 0; // FIXME: linkage in header
@@ -106,6 +123,7 @@ PsimagLite::Vector<Mpi::CommType>::Type MpiHolder::groups_; // FIXME: linkage in
 
 int MpiHolder::mpiSizeUsed_ = 1; // FIXME: linkage in header
 
+PsimagLite::Vector<SizeType>::Type MpiHolder::mpiSizes_; // FIXME: linkage in header
 } // namespace ConcurrencyPsi
 
 #endif // MPIHOLDER_H
