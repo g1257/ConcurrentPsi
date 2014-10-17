@@ -84,11 +84,11 @@ public:
 		v = w;
 	}
 
-	CommType split(int size, CommType comm)
+	CommType split(int size, CommType comm, int option)
 	{
 		int me0 = rank(Mpi::commWorld());
 		int me = rank(comm);
-		int color = me/size;
+		int color = (option == 0) ? me/size : me % size;
 		int key = 0;
 		CommType newcomm1;
 		MPI_Comm_split(comm, color, key, &newcomm1);
