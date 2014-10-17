@@ -21,7 +21,7 @@ public:
 			str += " An non-synced object is about to be destroyed.\n";
 			str += "\tThis could indicate a client error. ";
 			str += "(Did you forget to sync?)\n";
-			throw PsimagLite::RuntimeError(str);
+			std::cerr<<str;
 		}
 
 		for (SizeType i = 0; i < values_.size(); ++i) {
@@ -71,10 +71,10 @@ public:
 	}
 
 	template<typename MpiType>
-	void sync(MpiType& mpi, typename MpiType::CommType comm)
+	void sync(MpiType& mpi, typename MpiType::CommType comm, bool doIt)
 	{
 		for (SizeType i = 0; i < values_.size(); ++i)
-			values_[i]->sync(mpi, comm);
+			values_[i]->sync(mpi, comm, doIt);
 
 		synced_ = true;
 	}

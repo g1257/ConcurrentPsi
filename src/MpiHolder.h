@@ -13,7 +13,8 @@ class MpiHolder {
 	typedef Mpi MpiType;
 	typedef Mpi::CommType CommType;
 
-protected:
+//protected:
+public:
 
 	MpiHolder(int* argcPtr, char*** argvPtr, SizeType mpiSizeArg)
 	{
@@ -26,25 +27,19 @@ protected:
 				throw PsimagLite::RuntimeError(str);
 			}
 
-			groups_.push_back(Mpi::commWorld());
 			mpiSizeUsed_ = 1;
-			return;
 		}
 
+		std::cerr<<"MpiHolder ctor called with "<<mpiSizeArg<<"\n";
+		MpiType::waitForPrinting();
+		split(mpiSizeArg);
 		mpiSizes_.push_back(mpiSizeArg);
-		SizeType groupSize = groups_.size();
-		assert(groupSize > 0);
-		if (groupSize & 1) {
-			split(mpiSizeArg);
-			assert(groups_.size() == groupSize + 2);
-		}
 	}
 
 	~MpiHolder()
 	{
 		SizeType groupSize = groups_.size();
-		if (groupSize > 2) {
-			groups_.pop_back();
+		if (groupSize > 0) {
 			groups_.pop_back();
 		}
 
@@ -58,17 +53,23 @@ protected:
 	static CommType currentGroup()
 	{
 		SizeType groupSize = groups_.size();
-		assert(groupSize > 1);
+		if (groupSize == 0) {
+			PsimagLite::String str("MpiHolder<MPI>::currentGroup(): ");
+			str += " called outside a parallel loop\n";
+			throw PsimagLite::RuntimeError(str);
+		}
 
-		if (groupSize & 1)
-			return groups_[groupSize];
-
-		return groups_[groupSize-1];
+		std::cerr<<"currentGroup called when groupSize="<<groupSize<<" ";
+		for (SizeType i = 0; i < groups_.size(); ++i)
+			std::cerr<<groups_[i]<<" ";
+		std::cerr<<"\n";
+		MpiType::waitForPrinting();
+		return groups_[groupSize - 1];
 	}
 
 	void split(SizeType mpiSizeArg)
 	{
-		Mpi::CommType prevComm = groups_[groups_.size() - 1];
+		Mpi::CommType prevComm = Mpi::commWorld();
 		if (mpiSizeArg == 0) mpiSizeArg = mpi_->size(prevComm);
 
 		mpiSizeUsed_ *= mpiSizeArg;
@@ -87,12 +88,15 @@ protected:
 			throw PsimagLite::RuntimeError(str);
 		}
 
-		CommType mpiComm = mpi_->split(mpiSizeArg,prevComm,0);
-		groups_.push_back(mpiComm);
+		bool groupOdd = (groups_.size() & 1);
 
-		assert(mpiWorldSize % mpiSizeUsed_ == 0);
-		CommType mpiComm2 = mpi_->split(mpiSizeArg,prevComm,1);
-		groups_.push_back(mpiComm2);
+		if (groupOdd)
+			assert(mpiSizes_.size() > 0);
+
+		int option = (groupOdd) ? 1 : 0;
+		int mpiSizeArg2 = (groupOdd) ? mpiSizes_[mpiSizes_.size()-1] : mpiSizeArg;
+		CommType mpiComm = mpi_->split(mpiSizeArg2,prevComm,option);
+		groups_.push_back(mpiComm);
 	}
 
 	static MpiType& mpi()

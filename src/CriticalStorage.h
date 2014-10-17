@@ -72,10 +72,10 @@ public:
 		csImpl_.push(v);
 	}
 
-	void sync()
+	void sync(bool doIt = true)
 	{
 		assert(mpi_);
-		csImpl_.sync(*mpi_, comm_);
+		csImpl_.sync(*mpi_, comm_,doIt);
 	}
 
 	RealType& value(SizeType i, SizeType threadNum)

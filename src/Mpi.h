@@ -20,17 +20,17 @@ public:
 
 	static CommType commWorld() { noMpi(); return 1; }
 
-	void MPI_Init(int* argcPtr, char*** argvPtr) { noMpi(); }
+	static void MPI_Init(int* argcPtr, char*** argvPtr) { noMpi(); }
 
-	void MPI_Finalize() { noMpi(); }
+	static void MPI_Finalize() { noMpi(); }
 
-	void MPI_Comm_rank(CommType comm, int* rank) const { noMpi(); }
+	static void MPI_Comm_rank(CommType comm, int* rank) { noMpi(); }
 
-	void MPI_Comm_size(CommType comm, int* rank) const { noMpi(); }
+	static void MPI_Comm_size(CommType comm, int* rank) { noMpi(); }
 
-	void MPI_Barrier(CommType comm) const { noMpi(); }
+	static void MPI_Barrier(CommType comm) { noMpi(); }
 
-	void MPI_Comm_split(CommType comm, int color, int key, CommType* newcomm1)
+	static void MPI_Comm_split(CommType comm, int color, int key, CommType* newcomm1)
 	{
 		noMpi();
 	}
@@ -95,9 +95,7 @@ public:
 		int localrank = rank(newcomm1);
 		std::cout<<"size= "<<size<<" me0="<<me0<<" localrank= "<<localrank;
 		std::cout<<" me= "<<me<<" color="<<color<<" comm="<<comm<<" "<<newcomm1<<"\n";
-		std::cout.flush();
-		MPI_Barrier(Mpi::commWorld());
-		sleep(1);
+		waitForPrinting();
 		if (me0 == 0) {
 			std::cout<<"--------------------\n";
 			std::cout.flush();
@@ -105,6 +103,12 @@ public:
 
 		sleep(1);
 		return newcomm1;
+	}
+
+	static void waitForPrinting()
+	{
+		MPI_Barrier(commWorld());
+		sleep(1);
 	}
 
 private:

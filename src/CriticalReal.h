@@ -53,10 +53,10 @@ public:
 	}
 
 	template<typename MpiType>
-	void sync(MpiType& mpi, typename MpiType::CommType comm)
+	void sync(MpiType& mpi, typename MpiType::CommType comm, bool doIt)
 	{
 		assert(values_.size() > 0);
-		mpi.sync(values_[0], comm);
+		if (doIt) mpi.sync(values_[0], comm);
 
 		*vpointer_ = values_[0];
 	}

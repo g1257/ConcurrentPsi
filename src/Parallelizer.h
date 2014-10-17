@@ -170,6 +170,9 @@ public:
 	{
 		SizeType total = kernel_.size();
 
+		std::cerr<<"Calling launch with comm="<<mpiComm_<<"\n";
+		MpiType::waitForPrinting();
+
 		cs.prepare(BaseType::mpiPtr(), mpiComm_);
 		SizeType procs = BaseType::mpi().size(mpiComm_);
 		SizeType block = static_cast<SizeType>(total/procs);
