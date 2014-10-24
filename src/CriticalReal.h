@@ -34,10 +34,11 @@ public:
 
 	RealType& operator()(SizeType threadNum)
 	{
-		assert(threadNum < values_.size());
+		assert(0 < values_.size());
 		if (concurrentPattern_() == ConcurrentPatternType::PATTERN_READONLY)
 			return values_[0];
 
+		assert(threadNum < values_.size());
 		return values_[threadNum];
 	}
 
