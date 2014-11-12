@@ -20,23 +20,23 @@ public:
 
 	static CommType commWorld() { noMpi(); return 1; }
 
-	static void MPI_Init(int* argcPtr, char*** argvPtr) { noMpi(); }
+	static void MPI_Init(int*, char***) { noMpi(); }
 
 	static void MPI_Finalize() { noMpi(); }
 
-	static void MPI_Comm_rank(CommType comm, int* rank) { noMpi(); }
+	static void MPI_Comm_rank(CommType, int*) { noMpi(); }
 
-	static void MPI_Comm_size(CommType comm, int* rank) { noMpi(); }
+	static void MPI_Comm_size(CommType, int*) { noMpi(); }
 
-	static void MPI_Barrier(CommType comm) { noMpi(); }
+	static void MPI_Barrier(CommType) { noMpi(); }
 
-	static void MPI_Comm_split(CommType comm, int color, int key, CommType* newcomm1)
+	static void MPI_Comm_split(CommType, int, int, CommType*)
 	{
 		noMpi();
 	}
 
 	template<typename T>
-	void MPI_Reduce(T* v,T* w,int,int,int,int,CommType) const { noMpi(); }
+	void MPI_Reduce(T*,T*,int,int,int,int,CommType) const { noMpi(); }
 
 #else
 	typedef MPI_Comm CommType;

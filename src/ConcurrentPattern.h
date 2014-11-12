@@ -11,7 +11,7 @@ public:
 
 	enum PatternOpsEnum { PATTERN_NOOP, PATTERN_SUM};
 
-	ConcurrentPattern(PatternsEnum p, PatternOpsEnum o = PATTERN_NOOP)
+	ConcurrentPattern(PatternsEnum p, PatternOpsEnum = PATTERN_NOOP)
 	    : pattern_(p)
 	{}
 

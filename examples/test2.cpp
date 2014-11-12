@@ -59,7 +59,7 @@ public:
 	{}
 
 	template<typename SomeCriticalStorageType>
-	void operator()(SizeType index, SizeType threadNum, SomeCriticalStorageType& cs)
+	void operator()(SizeType, SizeType threadNum, SomeCriticalStorageType& cs)
 	{
 		//kernelInner_.setOuter(index);
 		InnerStorageType storageInner;

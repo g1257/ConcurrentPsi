@@ -93,8 +93,8 @@ public:
 
 	Parallelizer(KernelType& kernel,
 	             SizeType nPthreads,
-	             int* argcPtr = 0,
-	             char*** argvPtr = 0)
+	             int* = 0,
+	             char*** = 0)
 	    : kernel_(kernel),nthreads_(nPthreads)
 	{}
 
