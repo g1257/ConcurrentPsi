@@ -8,6 +8,8 @@
 #include <queue>    // for deque used in working stealing thread safe class
 #include <cassert>
 
+typedef unsigned int SizeType;
+
 class TaskKernel {
 
 public:
@@ -178,17 +180,17 @@ public:
 
 	~ThreadPool()
 	{
-		for (int t=0;t<threads_.size();t++)
+		for (SizeType t=0;t<threads_.size();t++)
 			pthread_join(threads_[t], 0);
 
 		pthread_attr_destroy(&attr_);
 
-		for (int i = 0; i < ptrJobQArray_.size(); ++i) {
+		for (SizeType i = 0; i < ptrJobQArray_.size(); ++i) {
 			delete ptrJobQArray_[i];
 			ptrJobQArray_[i] = 0;
 		}
 
-		for (int i = 0; i < hsArray_.size(); ++i) {
+		for (SizeType i = 0; i < hsArray_.size(); ++i) {
 			delete hsArray_[i];
 			hsArray_[i] = 0;
 		}
