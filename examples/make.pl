@@ -6,7 +6,7 @@ use warnings;
 use lib '../../PsimagLite/scripts';
 use Make;
 
-my @drivers = ("test1","test2","test3","test4","test5","test6");
+my @drivers = ("workStealing");
 
 backupMakefile();
 writeMakefile();
