@@ -1,3 +1,4 @@
+#include "../src/ParallelOutput.h"
 #include <pthread.h> //for pthread_t
 #include <cstdlib>     // atoi
 #include <stdio.h>
@@ -8,7 +9,9 @@
 #include <queue>    // for deque used in working stealing thread safe class
 #include <cassert>
 
-typedef unsigned int SizeType;
+SizeType ParallelOutput::counter_ = 0;
+pthread_mutex_t ParallelOutput::mutexCout_;
+ParallelOutput globalParallelOutput;
 
 class TaskKernel {
 
@@ -174,7 +177,7 @@ public:
 			}
 
 			usleep(100000); //if comment out this line, the thread launching mess up
-			std::cout<<" In loop,after launch thread t="<<t<<" wait 1 s.\n";
+			//std::cout<<" In loop,after launch thread t="<<t<<" wait 1 s.\n";
 		}
 	}
 
@@ -217,14 +220,24 @@ private:
 
 	ThreadPool& operator=(const ThreadPool&);
 
-	static void *listenToEnv(void *) { return 0;}
+	static void *listenToEnv(void *)
+	{
+		int tp = 0;
+		std::stringstream strstream;
+		strstream << tp;
+		std::string str;
+		str=strstream.str()+". thread a task: execute\n";
+
+		ParallelOutput::print(str);
+		return 0;
+	}
 
 	static void *listenToEnv2(void *thread_parameter)
 	{
 		HolderStructType* hs1 = static_cast<HolderStructType*>(thread_parameter);
 		long tp = hs1->threadParameter;
 		bool* pStart = hs1->ptrPoolStart;
-		bool* sDone = hs1->ptrSubmissionDone;
+		bool sDone = hs1->submissionDone;
 		ExternalKernelType* etk = hs1->ptrEtk;
 		const VectorWorkStealingQType& wsqArray = hs1->ptrWsqArray;
 		int* bThreads = hs1->ptrBusyThreads;
@@ -236,7 +249,7 @@ private:
 
 		int bt;
 		bt=1;
-		while (!(*sDone)){
+		while (!(sDone)){
 			if (*pStart){
 				assert(tp >= 0);
 				if (wsqArray[tp]->empty()){ //race condition here
@@ -310,7 +323,7 @@ int main(int argc, char* argv[])
 
 	ThreadPool<TaskKernel> TB1(thread_num);
 	usleep(300000);
-	std::cout<<" wait 3 s to start all threads in threadpool.\n";
+	//std::cout<<" wait 3 s to start all threads in threadpool.\n";
 
 	for (int kk=0; kk<15; kk++) {
 		TB1.receive(&etk1);
@@ -320,6 +333,6 @@ int main(int argc, char* argv[])
 
 	TB1.start();
 
-	std::cout<<"All threads finish, call TB1.joiner and pthread_exit below.  \n";
+	//std::cout<<"All threads finish, call TB1.joiner and pthread_exit below.  \n";
 }
 
