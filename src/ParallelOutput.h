@@ -25,7 +25,7 @@ public:
 	static void print(std::string str)
 	{
 		pthread_mutex_lock(&mutexCout_);
-		std::cout<<"Hello---------------------------\n";
+		std::cout<<str;
 		pthread_mutex_unlock(&mutexCout_);
 	}
 

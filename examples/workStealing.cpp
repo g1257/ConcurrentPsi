@@ -111,13 +111,13 @@ private:
 template<typename ExternalKernelType>
 struct HolderStruct{
 
-	HolderStruct(int numThreads) : ptrWsqArray(numThreads)
+	HolderStruct(int numThreads) : ptrJobQArray_(numThreads)
 	{}
 
 	long threadParameter;
 	bool* ptrPoolStart;
 	ExternalKernelType* ptrEtk;
-	std::vector<WorkStealingQ<ExternalKernelType>*> ptrWsqArray;
+	std::vector<WorkStealingQ<ExternalKernelType>*> ptrJobQArray_;
 	int* ptrBusyThreads;
 	int maxTp;
 };
@@ -163,7 +163,7 @@ public:
 			hsArray.maxTp=numThreads;
 
 			for (int tt=0;tt<numThreads;tt++){
-				hsArray.ptrWsqArray[tt]=ptrJobQArray_[tt];
+				hsArray.ptrJobQArray_[tt]=ptrJobQArray_[tt];
 			};
 
 			int rc = pthread_create(&threads_[t],
@@ -232,64 +232,6 @@ private:
 		return 0;
 	}
 
-	static void *listenToEnv2(void *thread_parameter)
-	{
-		HolderStructType* hs1 = static_cast<HolderStructType*>(thread_parameter);
-		long tp = hs1->threadParameter;
-		bool* pStart = hs1->ptrPoolStart;
-		bool sDone = hs1->submissionDone;
-		ExternalKernelType* etk = hs1->ptrEtk;
-		const VectorWorkStealingQType& wsqArray = hs1->ptrWsqArray;
-		int* bThreads = hs1->ptrBusyThreads;
-		int mTp = hs1->maxTp;
-
-		//std::stringstream strstream;
-		//strstream << tp;
-		//std::string str;
-
-		int bt;
-		bt=1;
-		while (!(sDone)){
-			if (*pStart){
-				assert(tp >= 0);
-				if (wsqArray[tp]->empty()){ //race condition here
-					*bThreads=*bThreads-bt;
-					bt=0;
-				}
-				if (wsqArray[tp]->canPop(etk) ){
-					etk->executeTask();
-					//str=strstream.str()+". thread a task: execute\n";
-					//std::cout<<str;
-				} else {    // start stealing
-					bool stolen(false);
-					for (int ios=1;ios<mTp;ios++){
-						int index = (tp+ios)%mTp;
-						assert(index < wsqArray.size());
-						stolen=wsqArray[index]->canSteal(etk);
-						//std::cout<<"stolen="<<stolen<<" tp="<<tp<<" ios="<<ios<<"\n";
-						if (stolen) break; //break out from current loop if steal a job
-					}
-					if (stolen){
-						etk->executeTask();
-						//str=strstream.str()+". thread a task: steal\n";
-						//std::cout<<str;
-					} else {
-						usleep(10000);
-					}
-				}
-			} else {
-				usleep(100000);
-			}
-
-			usleep(1);
-		}
-
-		//str=strstream.str()+" in listenToEnv submissionDone=true, poolStart=true\n";
-		//std::cout<<str;
-
-		return 0;
-	}
-
 	VectorPthreadType threads_;
 	VectorHolderStructType hsArray_;
 	VectorWorkStealingQType ptrJobQArray_;
@@ -302,6 +244,7 @@ private:
 	//Here is the problem, the threadpool should not know how to
 	// initialize the object, so the taskKernel constructer should not take argument.
 	ExternalKernelType taskObj_;
+	pthread_mutex_t mutexPoolStart_;
 };
 
 int main(int argc, char* argv[])
